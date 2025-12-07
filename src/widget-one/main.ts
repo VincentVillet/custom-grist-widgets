@@ -1,5 +1,3 @@
-import 'grist-plugin-api';
-
 // Grist boilerplate
 grist.ready();
 

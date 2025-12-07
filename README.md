@@ -97,8 +97,102 @@ To add a new Grist widget:
 5.  **Update the main `index.html` (optional but recommended):**
     Add a link to your new widget on the main `index.html` page for easy navigation during development.
 
-## 6. Coding Standards
+## 6. Live Grist Integration
 
+To test your widget with a real Grist document, you need to make your local development server accessible to the Grist web application. The recommended way to do this is with [ngrok](https://ngrok.com/), which creates a secure public URL for your local server.
+
+### Prerequisites
+
+*   **ngrok account and CLI:** [Download and install the ngrok CLI](https://ngrok.com/download). You will also need to sign up for a free account to get an authtoken.
+
+### Steps to Connect to Grist
+
+1.  **Start the Vite Dev Server:**
+    Run your local server as usual. Note the port it's running on (typically 5173).
+    ```bash
+    npm run dev
+    ```
+
+2.  **Start ngrok:**
+    In a **new terminal window**, start ngrok to create a tunnel to your Vite server's port.
+    ```bash
+    # Replace 5173 if your server is on a different port
+    ngrok http 5173
+    ```
+
+3.  **Get the Public URL:**
+    Ngrok will display a public "Forwarding" URL (e.g., `https://<random-string>.ngrok-free.app`). You need the **HTTPS** version of this URL.
+
+4.  **Add the Widget to Grist:**
+    a. Open any Grist document (either on the hosted service or your own instance).
+    b. Click **"Add New"** > **"Add Widget"** > select **"Custom"**.
+    c. In the widget configuration panel on the right, under **"URL"**, paste the full HTTPS URL to your widget's `index.html` file. For example:
+    `https://<random-string>.ngrok-free.app/src/widget-one/index.html`
+    d. Click **"Apply"**. Your local widget should now load in the Grist document.
+
+    Thanks to Vite's Hot Module Replacement (HMR), any changes you save in your code will automatically reflect in the widget loaded in Grist.
+
+## 7. Production, Deployment, and Privacy
+
+When you are ready to use your widget in production, you should not use `ngrok`. Instead, you will build the static files and host them on a web server.
+
+### Building for Production
+
+Run the following command to build your project:
+
+```bash
+npm run build
+```
+
+This will create a `dist/` directory containing optimized, static HTML, CSS, and JavaScript files for each widget entry point defined in `vite.config.ts`.
+
+### Deployment
+
+You can host the contents of the `dist/` directory on any static web hosting service (e.g., Vercel, Netlify, AWS S3, or your own server).
+
+The URL you use in Grist will be the public URL to your hosted widget's `index.html` file (e.g., `https://your-server.com/widget-one/index.html`).
+
+### Keeping Widgets Private
+
+There are two primary methods to use a widget in Grist without exposing its source code on the public internet.
+
+#### Method 1: Private Network Hosting (Most Secure)
+
+Host the static files from the `dist/` directory on a **private, internal web server** that is only accessible within your organization's network or VPN.
+
+1.  **Host the `dist/` folder** on an internal server.
+2.  The Grist instance you are using must be able to access this internal URL. This is most feasible if you are self-hosting Grist within the same network.
+3.  Use the internal URL (e.g., `https://your-internal-domain/widgets/widget-one/index.html`) in the Custom Widget configuration.
+
+This approach ensures that only authorized users and services on your network can access the widget's code.
+
+#### Method 2: Token-Based Authentication (Capability URL)
+
+If you cannot use a private network, you can protect your widget by requiring a secret token in the URL. Anyone with the full, secret URL can access the widget, but it won't be discoverable by others.
+
+**The Concept:** Your hosting server acts as a guard. It inspects incoming requests for a specific query parameter (e.g., `?token=...`) and only serves the files if the token is correct.
+
+**How to Implement:**
+
+This logic must be implemented on the **server-side**, not within the widget's frontend code. Simple static hosting services like GitHub Pages cannot do this. You need a hosting provider that can run code.
+
+1.  **Generate a Secret Token:** Create a strong, unpredictable random string. You can use a password generator for this.
+2.  **Configure Your Hosting Environment:**
+    *   **Using a Cloud Function (e.g., AWS Lambda, Netlify/Vercel Functions):** This is a great approach. Create a simple function that:
+        a.  Receives the HTTP request.
+        b.  Checks if the query parameter `token` matches your secret (which should be stored as an environment variable, not hard-coded).
+        c.  If the token is valid, serve the widget's `index.html` file.
+        d.  If not, return a `403 Forbidden` error.
+    *   **Using Edge Middleware (Vercel, Cloudflare Workers):** Configure a middleware rule that runs before a request hits your static files. This rule performs the same token validation logic as a cloud function.
+    *   **Using a Web Server (Nginx, Apache):** You can write configuration rules to inspect query parameters and conditionally serve files or return an error.
+
+3.  **Use the Secret URL in Grist:**
+    Once configured, your URL in Grist will look like this:
+    `https://your-server.com/widget-one/index.html?token=YOUR_SECRET_TOKEN`
+
+> **Security Note:** Treat this URL, including the token, as a password. While this prevents public discovery, anyone who has the full URL can access the widget. The token may also be visible in server logs or browser history. This method is more secure than a public link but less secure than private network hosting.
+
+## 8. Coding Standards
 *   **TypeScript:** Always use strict typing. Treat TS interfaces like Python Pydantic models or Django definitions.
 *   **Imports:** Use relative paths or configured aliases (e.g., `@shared`).
 *   **Grist API:** Ensure `grist.ready()` is always called. Handle the asynchronous nature of `grist.onRecord` or `grist.onRecords`.
