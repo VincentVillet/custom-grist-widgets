@@ -78,7 +78,7 @@ async function updatePresencesTable(inputData: any[]) {
     maxDate.setUTCHours(0, 0, 0, 0);
 
     const repasList = ["petit déjeuner", "déjeuner", "apéro", "dîner"];
-    const rows: { Date: string, Repas: string, Personne: any, Presence: number }[] = [];
+    const rows: { Repas: string, Personne: any, Presence: number }[] = [];
     let currentDate = new Date(minDate.getTime());
 
     while (currentDate.getTime() <= maxDate.getTime()) {
@@ -101,8 +101,7 @@ async function updatePresencesTable(inputData: any[]) {
           else if (currentTs === depTs && repas === "petit déjeuner") presence = 1;
           
           rows.push({
-            Date: currentDate.toISOString().substring(0, 10),
-            Repas: repas,
+            Repas: currentDate.toISOString().substring(0, 10) + ' ' + repas,
             Personne: person.Personne,
             Presence: presence
           });
@@ -113,9 +112,8 @@ async function updatePresencesTable(inputData: any[]) {
     
     // --- 2. Wipe and rebuild the 'Presences' table ---
     // Transform the row-oriented `rows` array into a column-oriented `BulkColValues` object.
-  const bulkColValues: { [key: string]: any[] } = { Date: [], Repas: [], Personne: [], Presence: [] };
+  const bulkColValues: { [key: string]: any[] } = { Repas: [], Personne: [], Presence: [] };
   for (const row of rows) {
-    bulkColValues.Date.push(row.Date);
     bulkColValues.Repas.push(row.Repas);
     bulkColValues.Personne.push(row.Personne);
     bulkColValues.Presence.push(row.Presence);
@@ -138,5 +136,5 @@ async function updatePresencesTable(inputData: any[]) {
 }
 
 // Register the function to run when the source data changes.
-grist.ready();
+grist.ready({requiredAccess: 'full'});
 grist.onRecords(updatePresencesTable);
