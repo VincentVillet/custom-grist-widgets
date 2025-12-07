@@ -24,11 +24,12 @@ my-grist-widgets/
 │   │   ├── index.html   <-- Entry point
 │   │   └── main.ts      <-- Logic
 │   └── widget-two/      <-- Widget 2
-Testing Strategy:
+```
+**Testing Strategy:**
 
 Local Logic: Mock window.grist data when !window.grist is detected.
 
-Live Grist Integration:
+**Live Grist Integration:**
 
 Tunneling via ngrok http 5173 (Preferred for HTTPS support).
 
@@ -36,8 +37,7 @@ Tunneling via ngrok http 5173 (Preferred for HTTPS support).
 ## 4. Current Configuration Reference
 vite.config.ts Strategy: Using rollupOptions.input to map multiple HTML entry points.
 
-TypeScript
-
+```TypeScript
 // Current config logic
 build: {
   rollupOptions: {
@@ -48,6 +48,7 @@ build: {
     }
   }
 }
+```
 
 ## 5. Coding Standards & Instructions for AI
 TypeScript: Always use strict typing. Treat TS interfaces like Python Pydantic models or Django definitions.
@@ -57,3 +58,17 @@ Imports: Use relative paths or configured aliases (e.g., @shared).
 Grist API: Ensure grist.ready() is always called. Handle the asynchronous nature of grist.onRecord or grist.onRecords.
 
 Tone: Be concise. Relate JS/TS concepts to Python/Django concepts where helpful (e.g., "This package.json is like your requirements.txt").
+
+## 6. Lessons Learned & Best Practices
+
+Our initial development surfaced several key insights into the Grist Widget API:
+
+1.  **Use Bulk Actions:** For performance and to avoid API rate limits, always use bulk actions (`BulkAddRecord`, `BulkRemoveRecord`) or `ReplaceTableData` instead of single actions in a loop. Multiple actions can be bundled into a single `applyUserActions` call to perform a single, atomic transaction.
+
+2.  **Column-Oriented Data:** Bulk actions require data in a **column-oriented** format (`BulkColValues`), not a row-oriented one. This means transforming data from `[ {colA: val1}, {colA: val2} ]` to `{ colA: [val1, val2] }`.
+
+3.  **`applyUserActions` is Key:** The primary method for writing data to any table is `grist.docApi.applyUserActions()`. Simpler helpers on the `grist` object are typically for the widget's source table only.
+
+4.  **Date Handling:** The `grist.onRecords()` callback provides date/datetime values as JavaScript `Date` objects directly, not as timestamps. However, `grist.docApi.fetchTable()` returns them as numeric timestamps (seconds since epoch). This distinction is critical for comparisons and processing.
+
+5.  **API Reference:** The Grist Widget API is sparsely documented. We have created `Grist_actions.md` as a practical, user-friendly reference for the `applyUserActions` format.
