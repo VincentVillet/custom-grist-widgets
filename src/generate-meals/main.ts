@@ -16,17 +16,34 @@ function setupUI() {
   const statusContainer = document.getElementById('status-container')!;
   const statusMessage = document.getElementById('status-message')!;
 
-  // Set default dates
-  const today = new Date();
-  const nextWeek = new Date();
-  nextWeek.setDate(today.getDate() + 7);
-  startDateInput.value = today.toISOString().split('T')[0];
-  endDateInput.value = nextWeek.toISOString().split('T')[0];
+  // Load saved dates from options, or set default dates.
+  async function loadInitialDates() {
+    const [savedStartDate, savedEndDate] = await Promise.all([
+      grist.getOption('start_date'),
+      grist.getOption('end_date'),
+    ]);
+    
+    if (savedStartDate && savedEndDate && typeof savedStartDate === 'string' && typeof savedEndDate === 'string') {
+      startDateInput.value = savedStartDate;
+      endDateInput.value = savedEndDate;
+    } else {
+      // Set default dates if no options are found
+      const today = new Date();
+      const nextWeek = new Date();
+      nextWeek.setDate(today.getDate() + 7);
+      startDateInput.value = today.toISOString().split('T')[0];
+      endDateInput.value = nextWeek.toISOString().split('T')[0];
+    }
+  }
+  
+  loadInitialDates();
 
   generateBtn.addEventListener('click', async () => {
     // Use Z to specify UTC and avoid timezone issues with date-only strings
-    const startDate = new Date(startDateInput.value + 'T00:00:00Z');
-    const endDate = new Date(endDateInput.value + 'T00:00:00Z');
+    const startDateStr = startDateInput.value;
+    const endDateStr = endDateInput.value;
+    const startDate = new Date(startDateStr + 'T00:00:00Z');
+    const endDate = new Date(endDateStr + 'T00:00:00Z');
 
     if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
       showStatus('Veuillez sélectionner une date de début et de fin valide.', true);
@@ -41,6 +58,13 @@ function setupUI() {
 
     try {
       await generateMeals(startDate, endDate);
+      
+      // On success, save the dates as options
+      await Promise.all([
+        grist.setOption('start_date', startDateStr),
+        grist.setOption('end_date', endDateStr),
+      ]);
+
       showStatus('Les repas ont été générés avec succès.', false);
     } catch (error) {
       console.error(error);
