@@ -1,4 +1,5 @@
 import 'grist-plugin-api';
+import { MEAL_TYPES } from '../shared/constants';
 
 // A helper function to update the UI with status messages.
 function setStatus(message: string, isProcessing: boolean = false) {
@@ -77,12 +78,11 @@ async function updatePresencesTable(inputData: any[]) {
     minDate.setUTCHours(0, 0, 0, 0);
     maxDate.setUTCHours(0, 0, 0, 0);
 
-    const repasList = ["petit déjeuner", "déjeuner", "apéro", "dîner"];
     const rows: { Repas: string, Personne: any, Presence: number }[] = [];
     let currentDate = new Date(minDate.getTime());
 
     while (currentDate.getTime() <= maxDate.getTime()) {
-      for (const repas of repasList) {
+      for (const repas of MEAL_TYPES) {
         for (const person of processedData) {
           if (!(person.Date_arrivee instanceof Date) || !(person.Date_depart instanceof Date)) continue;
           

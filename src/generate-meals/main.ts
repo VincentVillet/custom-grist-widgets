@@ -1,9 +1,9 @@
 import { columnarToRow, rowToColumnar } from '../shared/grist-data-helpers';
+import { MEAL_TYPES } from '../shared/constants';
 
 // Ensure Grist API is available
 declare const grist: any;
 
-const MEAL_TYPES = ["petit déjeuner", "déjeuner", "snack", "dîner", "consommables"];
 const REPAS_TABLE_NAME = 'Repas';
 
 /**
