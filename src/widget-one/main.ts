@@ -63,6 +63,9 @@ async function updatePresencesTable(inputData: any[]) {
       Date_arrivee: r.Date_arrivee,
       Date_depart: r.Date_depart,
       Personne: r.Personne,
+      Petit_dejeuner: r.Petit_dejeuner,
+      Email: r.email,
+      TaillePortion: r.Taille_portion
     }));
 
     const validArrivals = processedData.filter(r => r.Date_arrivee instanceof Date).map(r => r.Date_arrivee.getTime());
@@ -99,11 +102,12 @@ async function updatePresencesTable(inputData: any[]) {
           if (currentTs > arrTs && currentTs < depTs) presence = 1;
           else if (currentTs === arrTs && ["apéro", "dîner"].includes(repas)) presence = 1;
           else if (currentTs === depTs && repas === "petit déjeuner") presence = 1;
+          if (person.Petit_dejeuner === 0 && repas === "petit déjeuner") presence = 0;
           
           rows.push({
             Repas: currentDate.toISOString().substring(0, 10) + ' ' + repas,
             Personne: person.Personne,
-            Presence: presence
+            Presence: person.TaillePortion * presence
           });
         }
       }
