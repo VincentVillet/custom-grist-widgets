@@ -62,11 +62,10 @@ async function assignTasks() {
   const personnesMap = new Map(allPersonnes.map(p => [p.id, p]));
   
   // 3. Initialize task counts for each person based on current assignments in Grist
-  const assignedTasksCount = new Map<number, number>();
   allPersonnes.forEach(p => {
     // The 'Repas' column on 'Personnes' is a ReferenceList of tasks they are assigned to.
     const existingTasks = (p.Repas as any[])?.length > 1 ? (p.Repas as any[]).length - 1 : 0;
-    assignedTasksCount.set(p.id, existingTasks);
+    p["assignedTasks"] = existingTasks;
   });
 
   const userActions: any[] = [];
@@ -92,6 +91,15 @@ async function assignTasks() {
 
     const newlyAssignedToThisRepas: number[] = [];
 
+    // Task score boost handling
+    allPersonnes.forEach(p => {
+          if (p.taskScoreBoostRemainingMeals === 0) {
+            p.taskScoreBoost = 0;
+          } else {
+            p.taskScoreBoostRemainingMeals -= 1;
+          }
+        });
+
     // 5. Assignment loop: select people one by one
     while (numToAssign > 0) {
       let bestCandidateId = -1;
@@ -108,9 +116,13 @@ async function assignTasks() {
         if (stayDuration <= 0) continue;
 
         const outsideTasks = person.Nb_taches_hors_grist || 0;
-        const currentTasks = assignedTasksCount.get(candidateId) || 0;
+        const currentTasks = person.assignedTasks || 0;
         
-        const score = (outsideTasks + currentTasks) / stayDuration;
+        let score = (outsideTasks + currentTasks) / stayDuration;
+        if (person.taskScoreBoost > 0) {
+          score += person.taskScoreBoost;
+        }
+        person.score = score;
 
         if (score < minScore) {
           minScore = score;
@@ -121,7 +133,12 @@ async function assignTasks() {
       if (bestCandidateId !== -1) {
         newlyAssignedToThisRepas.push(bestCandidateId);
         // Increment the task count for the selected person for the next scoring
-        assignedTasksCount.set(bestCandidateId, (assignedTasksCount.get(bestCandidateId) || 0) + 1);
+        const person = personnesMap.get(bestCandidateId);
+        if (person) {
+          person.assignedTasks = (person.assignedTasks || 0) + 1;
+          person["taskScoreBoost"] = 0.5;
+          person["taskScoreBoostRemainingMeals"] = 1;
+        }
         numToAssign--;
       } else {
         // Should not happen if there are enough candidates
