@@ -65,7 +65,8 @@ async function updatePresencesTable(inputData: any[]) {
       Personne: r.Personne,
       Petit_dejeuner: r.Petit_dejeuner,
       Email: r.email,
-      TaillePortion: r.Taille_portion
+      TaillePortion: r.Taille_portion,
+      Id: r.id
     }));
 
     const validArrivals = processedData.filter(r => r.Date_arrivee instanceof Date).map(r => r.Date_arrivee.getTime());
@@ -108,7 +109,7 @@ async function updatePresencesTable(inputData: any[]) {
           
           rows.push({
             Repas: currentDate.toISOString().substring(0, 10) + ' ' + repas,
-            Personne: person.Personne,
+            Personne: person.Id,
             Presence: presence
           });
         }
