@@ -100,14 +100,16 @@ async function updatePresencesTable(inputData: any[]) {
           const depTs = dep.getTime();
 
           if (currentTs > arrTs && currentTs < depTs) presence = 1;
-          else if (currentTs === arrTs && ["apéro", "dîner"].includes(repas)) presence = 1;
+          else if (currentTs === arrTs && ["apéro", "dîner", "consommables"].includes(repas)) presence = 1;
           else if (currentTs === depTs && repas === "petit déjeuner") presence = 1;
           if (person.Petit_dejeuner === 0 && repas === "petit déjeuner") presence = 0;
+
+          if (repas !== "consommables") presence = presence * person.TaillePortion;
           
           rows.push({
             Repas: currentDate.toISOString().substring(0, 10) + ' ' + repas,
             Personne: person.Personne,
-            Presence: person.TaillePortion * presence
+            Presence: presence
           });
         }
       }
