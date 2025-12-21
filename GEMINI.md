@@ -76,3 +76,7 @@ Our initial development surfaced several key insights into the Grist Widget API:
 6. **Managing options** See `Grist_options.md` for Grist option documentation.
 
 7.  **Data Format Variation:** Be aware that different Grist API functions return data in different formats. `grist.docApi.fetchTable()` returns data in a **columnar format** (`{ colA: [...], colB: [...] }`), while `grist.onRecords()` provides data in a **row-oriented format** (`[{ colA: ..., colB: ... }, ...]`). Helper functions in `src/shared/grist-data-helpers.ts` are available to convert between these formats.
+
+8. **Putting values in Reference columns:** Use the id of the row you wish to link (all grist tables have an "id" column).
+
+9. **Putting values in Reference list columns:** Use ["L"] + the list of ids you wish to link (for example, ["L", 2, 3] to reference the rows with ids 2 and 3).

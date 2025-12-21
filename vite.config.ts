@@ -15,6 +15,7 @@ export default defineConfig({
         main: resolve(__dirname, 'index.html'),
         'widget-one': resolve(__dirname, 'src/widget-one/index.html'),
         'generate-meals': resolve(__dirname, 'src/generate-meals/index.html'),
+        'assign-tasks': resolve(__dirname, 'src/assign-tasks/index.html'),
       },
     },
   },
