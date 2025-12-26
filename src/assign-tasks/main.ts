@@ -63,9 +63,23 @@ async function assignTasks() {
   
   // 3. Initialize task counts for each person based on current assignments in Grist
   allPersonnes.forEach(p => {
+    p["taskScoreBoost"] = 0;
+    p["taskScoreBoostRemainingMeals"] = 0;
     // The 'Repas' column on 'Personnes' is a ReferenceList of tasks they are assigned to.
-    const existingTasks = (p.Repas as any[])?.length > 1 ? (p.Repas as any[]).length - 1 : 0;
-    p["assignedTasks"] = existingTasks;
+    p["NbConsommablesTasks"] = 0;
+    p["NbNonConsommablesTasks"] = 0;
+    if (p.Repas != null) {
+        p.Repas.forEach((repasId: number) => {
+        const repas = allRepas.find(r => r.id === repasId);
+        if (repas) {
+          if (repas.Type === 'consommables') {
+            p["NbConsommablesTasks"] += 1;
+          } else {
+            p["NbNonConsommablesTasks"] += 1;
+          }
+        }
+      });
+    }
   });
 
   const userActions: any[] = [];
@@ -106,19 +120,27 @@ async function assignTasks() {
       let minScore = Infinity;
 
       // Find the candidate with the lowest score
+      let taskType = "";
       for (const candidateId of candidateIds) {
         if (newlyAssignedToThisRepas.includes(candidateId)) continue; // Don't assign the same person twice to the same task
 
         const person = personnesMap.get(candidateId);
         if (!person) continue;
 
-        const stayDuration = person.Nb_jours_sejour || 1; // Avoid division by zero
-        if (stayDuration <= 0) continue;
+        const stayDurationUpToRepas = 1 + ((repas.Date - person.Date_arrivee) / (60 * 60 * 24));
+        // Avoid division by zero
+        if (stayDurationUpToRepas <= 0) continue;
 
-        const outsideTasks = person.Nb_taches_hors_grist || 0;
-        const currentTasks = person.assignedTasks || 0;
+        let outsideTasks = 0;
+        if (repas.Type === "consommables") {
+            outsideTasks = person.Nb_taches_hors_grist;
+            taskType = "NbConsommablesTasks";
+        } else {
+            outsideTasks = 0;
+            taskType = "NbNonConsommablesTasks";
+        }
         
-        let score = (outsideTasks + currentTasks) / stayDuration;
+        let score = (outsideTasks + person[taskType]) / stayDurationUpToRepas;
         if (person.taskScoreBoost > 0) {
           score += person.taskScoreBoost;
         }
@@ -135,8 +157,8 @@ async function assignTasks() {
         // Increment the task count for the selected person for the next scoring
         const person = personnesMap.get(bestCandidateId);
         if (person) {
-          person.assignedTasks = (person.assignedTasks || 0) + 1;
-          person["taskScoreBoost"] = 0.5;
+          person[taskType] = (person[taskType] || 0) + 1;
+          person["taskScoreBoost"] = 1;
           person["taskScoreBoostRemainingMeals"] = 1;
         }
         numToAssign--;
