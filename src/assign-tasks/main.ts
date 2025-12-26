@@ -142,6 +142,9 @@ async function assignTasks() {
         
         let score = (person[taskType] + 0.3 * person[otherType]) / stayDurationUpToRepas;
         score += person.taskScoreBoost;
+        if (repas.Date === person.Date_arrivee && taskType === "NbNonConsommablesTasks") {
+          score += 1; // Favor people arriving on the same day for non-consommables
+        }
         person.score = score;
 
         if (score < minScore) {
