@@ -66,7 +66,7 @@ async function assignTasks() {
     p["taskScoreBoost"] = 0;
     p["taskScoreBoostRemainingMeals"] = 0;
     // The 'Repas' column on 'Personnes' is a ReferenceList of tasks they are assigned to.
-    p["NbConsommablesTasks"] = 0;
+    p["NbConsommablesTasks"] = p.Nb_taches_hors_grist;
     p["NbNonConsommablesTasks"] = 0;
     if (p.Repas != null) {
         p.Repas.forEach((repasId: number) => {
@@ -121,6 +121,7 @@ async function assignTasks() {
 
       // Find the candidate with the lowest score
       let taskType = "";
+      let otherType = "";
       for (const candidateId of candidateIds) {
         if (newlyAssignedToThisRepas.includes(candidateId)) continue; // Don't assign the same person twice to the same task
 
@@ -131,19 +132,16 @@ async function assignTasks() {
         // Avoid division by zero
         if (stayDurationUpToRepas <= 0) continue;
 
-        let outsideTasks = 0;
         if (repas.Type === "consommables") {
-            outsideTasks = person.Nb_taches_hors_grist;
             taskType = "NbConsommablesTasks";
+            otherType = "NbNonConsommablesTasks";
         } else {
-            outsideTasks = 0;
             taskType = "NbNonConsommablesTasks";
+            otherType = "NbConsommablesTasks";
         }
         
-        let score = (outsideTasks + person[taskType]) / stayDurationUpToRepas;
-        if (person.taskScoreBoost > 0) {
-          score += person.taskScoreBoost;
-        }
+        let score = (person[taskType] + 0.3 * person[otherType]) / stayDurationUpToRepas;
+        score += person.taskScoreBoost;
         person.score = score;
 
         if (score < minScore) {
