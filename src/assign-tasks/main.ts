@@ -66,16 +66,16 @@ async function assignTasks() {
     p["taskScoreBoost"] = 0;
     p["taskScoreBoostRemainingMeals"] = 0;
     // The 'Repas' column on 'Personnes' is a ReferenceList of tasks they are assigned to.
-    p["NbConsommablesTasks"] = p.Nb_taches_hors_grist;
-    p["NbNonConsommablesTasks"] = 0;
+    p["NbNonMealPreparationTasks"] = p.Nb_taches_hors_grist;
+    p["NbMealPreparationTasks"] = 0;
     if (p.Repas != null) {
         p.Repas.forEach((repasId: number) => {
         const repas = allRepas.find(r => r.id === repasId);
         if (repas) {
           if (repas.Type === 'consommables') {
-            p["NbConsommablesTasks"] += 1;
+            p["NbNonMealPreparationTasks"] += 1;
           } else {
-            p["NbNonConsommablesTasks"] += 1;
+            p["NbMealPreparationTasks"] += 1;
           }
         }
       });
@@ -133,16 +133,16 @@ async function assignTasks() {
         if (stayDurationUpToRepas <= 0) continue;
 
         if (repas.Type === "consommables") {
-            taskType = "NbConsommablesTasks";
-            otherType = "NbNonConsommablesTasks";
+            taskType = "NbNonMealPreparationTasks";
+            otherType = "NbMealPreparationTasks";
         } else {
-            taskType = "NbNonConsommablesTasks";
-            otherType = "NbConsommablesTasks";
+            taskType = "NbMealPreparationTasks";
+            otherType = "NbNonMealPreparationTasks";
         }
         
         let score = (person[taskType] + 0.3 * person[otherType]) / stayDurationUpToRepas;
         score += person.taskScoreBoost;
-        if (repas.Date === person.Date_arrivee && taskType === "NbNonConsommablesTasks") {
+        if (repas.Date === person.Date_arrivee && taskType === "NbMealPreparationTasks") {
           score += 1; // Favor people arriving on the same day for non-consommables
         }
         person.score = score;
