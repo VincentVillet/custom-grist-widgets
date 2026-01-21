@@ -1,4 +1,3 @@
-import 'grist-plugin-api';
 import { MEAL_TYPES } from '../shared/constants';
 
 // A helper function to update the UI with status messages.
@@ -46,7 +45,7 @@ async function updatePresencesTable(inputData: any[]) {
       setStatus('Données sources vides, nettoyage des présences...', true);
       const allOldRecords = await grist.docApi.fetchTable('Presences');
       if (allOldRecords.length > 0) {
-        const idsToRemove = allOldRecords.map(r => r.id);
+        const idsToRemove = allOldRecords.map((r: any) => r.id);
         await grist.docApi.applyUserActions([
           ['BulkRemoveRecord', 'Presences', idsToRemove]
         ]);
@@ -136,7 +135,7 @@ async function updatePresencesTable(inputData: any[]) {
     setStatus('Présences mises à jour.', false);
     flashSuccess();
 
-  } catch (err) {
+  } catch (err: any) {
     console.error("Presence Widget Error:", err);
     setStatus(`Erreur: ${err.message}`, false);
   }
