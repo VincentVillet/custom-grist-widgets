@@ -1,0 +1,1 @@
+function f(n){const o=Object.keys(n);if(o.length===0)return[];const r=n[o[0]].length,t=[];for(let e=0;e<r;e++){const s={};for(const c of o)s[c]=n[c][e];t.push(s)}return t}function u(n){const o={};if(n.length===0)return o;const r=Object.keys(n[0]);for(const t of r)o[t]=[];for(const t of n)for(const e of r)o[e].push(t[e]);return o}export{f as c,u as r};
